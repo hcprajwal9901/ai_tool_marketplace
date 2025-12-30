@@ -245,5 +245,5 @@ Please open an issue or submit a PR with clear documentation.
 ---
 ## 📬 Contact
 For partnerships, sponsorships, or enterprise access:
-email@example.com
-
+Networkershome 
+https://www.networkershome.com/
