@@ -18,12 +18,12 @@ DATABASE_URL = str(settings.DATABASE_URL).replace(
 
 # Create async engine
 engine = create_async_engine(
-    DATABASE_URL,
+    url=str(settings.DATABASE_URL),
     echo=settings.DEBUG,
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
+    poolclass=NullPool,
     pool_pre_ping=True,
 )
+
 
 # Session factory
 AsyncSessionLocal = async_sessionmaker(
