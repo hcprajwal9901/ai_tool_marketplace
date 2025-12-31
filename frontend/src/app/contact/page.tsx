@@ -40,7 +40,7 @@ export default function ContactPage() {
                                 </dt>
                                 <dd>
                                     <a className="hover:text-gray-900" href="mailto:support@ai-marketplace.com">
-                                        support@ai-marketplace.com
+                                        prajwal@networkershome.com
                                     </a>
                                 </dd>
                             </div>
@@ -50,8 +50,8 @@ export default function ContactPage() {
                                     <MapPin className="h-7 w-6 text-gray-400" aria-hidden="true" />
                                 </dt>
                                 <dd>
-                                    123 Innovation Drive<br />
-                                    San Francisco, CA 94103
+                                    Networkershome, HSR Layout<br />
+                                    Bangalore, Karnataka 560102
                                 </dd>
                             </div>
                         </dl>
