@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
 
     # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
+    CORS_ORIGINS: List[str] = ["http://localhost:3000", "https://ai-tool-marketplace-lybg.vercel.app/"]
 
     # Database
     DATABASE_URL: PostgresDsn = Field(..., description="PostgreSQL connection URL")
