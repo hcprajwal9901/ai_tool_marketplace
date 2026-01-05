@@ -1,5 +1,6 @@
 """
 Embedding service for semantic search using OpenAI and Qdrant.
+Supports both local Qdrant and Qdrant Cloud.
 """
 import logging
 from typing import List, Optional, Dict, Any
@@ -28,33 +29,48 @@ class EmbeddingService:
         self.dimensions = settings.EMBEDDING_DIMENSIONS
 
     async def connect(self):
-        """Connect to Qdrant."""
+        """Connect to Qdrant (local or cloud)."""
         try:
-            self.qdrant_client = QdrantClient(
-                host=settings.QDRANT_HOST,
-                port=settings.QDRANT_PORT
-            )
+            # Check if QDRANT_URL is set for cloud deployment
+            if settings.QDRANT_URL and not settings.QDRANT_URL.startswith("http://localhost"):
+                # Qdrant Cloud
+                self.qdrant_client = QdrantClient(
+                    url=settings.QDRANT_URL,
+                    api_key=settings.QDRANT_API_KEY
+                )
+                logger.info(f"Connected to Qdrant Cloud: {settings.QDRANT_URL}")
+            else:
+                # Local Qdrant
+                self.qdrant_client = QdrantClient(
+                    host=settings.QDRANT_HOST,
+                    port=settings.QDRANT_PORT
+                )
+                logger.info(f"Connected to local Qdrant: {settings.QDRANT_HOST}:{settings.QDRANT_PORT}")
+
             # Ensure collection exists
             self._ensure_collection()
-            logger.info("Connected to Qdrant")
         except Exception as e:
             logger.error(f"Failed to connect to Qdrant: {e}")
+            # Don't raise - allow app to continue without vector DB
 
     def _ensure_collection(self):
         """Create collection if it doesn't exist."""
         if not self.qdrant_client:
             return
 
-        collections = self.qdrant_client.get_collections().collections
-        if not any(c.name == self.collection_name for c in collections):
-            self.qdrant_client.create_collection(
-                collection_name=self.collection_name,
-                vectors_config=VectorParams(
-                    size=self.dimensions,
-                    distance=Distance.COSINE
+        try:
+            collections = self.qdrant_client.get_collections().collections
+            if not any(c.name == self.collection_name for c in collections):
+                self.qdrant_client.create_collection(
+                    collection_name=self.collection_name,
+                    vectors_config=VectorParams(
+                        size=self.dimensions,
+                        distance=Distance.COSINE
+                    )
                 )
-            )
-            logger.info(f"Created collection: {self.collection_name}")
+                logger.info(f"Created collection: {self.collection_name}")
+        except Exception as e:
+            logger.warning(f"Could not ensure collection exists: {e}")
 
     async def generate_embedding(self, text: str) -> Optional[List[float]]:
         """Generate embedding for text using OpenAI."""

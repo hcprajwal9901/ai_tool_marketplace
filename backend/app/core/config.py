@@ -10,7 +10,9 @@ import os
 from dotenv import load_dotenv
 
 # Manually load .env to force override any system environment variables
-load_dotenv(os.path.join(os.getcwd(), ".env"), override=True)
+env_path = os.path.join(os.getcwd(), ".env")
+if os.path.exists(env_path):
+    load_dotenv(env_path, override=True)
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
@@ -45,7 +47,9 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     CACHE_TTL_SECONDS: int = 300
 
-    # Vector Database (Qdrant)
+    # Vector Database (Qdrant) - Cloud URL or local host/port
+    QDRANT_URL: str = "http://localhost:6333"
+    QDRANT_API_KEY: Optional[str] = None
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: int = 6333
     QDRANT_COLLECTION: str = "tool_embeddings"
@@ -73,10 +77,6 @@ class Settings(BaseSettings):
     RANKING_WEIGHT_REVIEWS: float = 20.0
     RANKING_WEIGHT_FRESHNESS: float = 10.0
     RANKING_WEIGHT_INTERNAL: float = 80.0
-
-    # Background Jobs
-    CELERY_BROKER_URL: str = "redis://localhost:6379/1"
-    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
 
     # Monitoring
     SENTRY_DSN: Optional[str] = None

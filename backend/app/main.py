@@ -1,5 +1,6 @@
 """
 FastAPI application entry point.
+Configured for both local development and Vercel serverless deployment.
 """
 import logging
 import sys
@@ -15,7 +16,7 @@ if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from app.core.config import settings
-from app.core.database import init_db, close_db
+from app.core.database import init_db, close_db, AsyncSessionLocal
 from app.core.redis import redis_client
 from app.api.v1.router import api_router
 from app.services.embeddings import embedding_service
@@ -27,34 +28,42 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Track if we've initialized
+_initialized = False
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
-    # Startup
-    logger.info("Starting AI Tool Marketplace API...")
+    global _initialized
 
-    # Initialize database
-    await init_db()
-    logger.info("Database initialized")
+    # Startup - only initialize once
+    if not _initialized:
+        logger.info("Starting AI Tool Marketplace API...")
 
-    # Connect to Redis
-    try:
-        await redis_client.connect()
-        logger.info("Redis connected")
-    except Exception as e:
-        logger.warning(f"Redis connection failed: {e}")
+        # Initialize database
+        await init_db()
+        logger.info("Database initialized")
 
-    # Connect to vector database
-    try:
-        await embedding_service.connect()
-        logger.info("Vector database connected")
-    except Exception as e:
-        logger.warning(f"Vector database connection failed: {e}")
+        # Connect to Redis (optional for serverless)
+        try:
+            await redis_client.connect()
+            logger.info("Redis connected")
+        except Exception as e:
+            logger.warning(f"Redis connection failed: {e}")
+
+        # Connect to vector database (optional for serverless)
+        try:
+            await embedding_service.connect()
+            logger.info("Vector database connected")
+        except Exception as e:
+            logger.warning(f"Vector database connection failed: {e}")
+
+        _initialized = True
 
     yield
 
-    # Shutdown
+    # Shutdown - cleanup
     logger.info("Shutting down...")
     await close_db()
     await redis_client.disconnect()
@@ -114,7 +123,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Rate limiting middleware
+# Rate limiting middleware (optional Redis dependency)
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     """Apply rate limiting per IP."""
